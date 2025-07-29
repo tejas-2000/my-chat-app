@@ -12,3 +12,8 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+// Request browser notification permission on app load
+if (window.Notification && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}

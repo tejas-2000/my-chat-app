@@ -5,3 +5,9 @@ export function formatMessageTime(date) {
     hour12: false,
   });
 }
+
+export function showBrowserNotification(title, options) {
+  if (window.Notification && Notification.permission === "granted") {
+    new Notification(title, options);
+  }
+}

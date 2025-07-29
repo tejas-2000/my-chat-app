@@ -24,6 +24,26 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId) userSocketMap[userId] = socket.id;
 
+  // Join user to their groups
+  socket.on("joinGroups", (groupIds) => {
+    if (groupIds && Array.isArray(groupIds)) {
+      groupIds.forEach((groupId) => {
+        socket.join(groupId);
+        console.log(`User ${userId} joined group ${groupId}`);
+      });
+    }
+  });
+
+  // Leave groups
+  socket.on("leaveGroups", (groupIds) => {
+    if (groupIds && Array.isArray(groupIds)) {
+      groupIds.forEach((groupId) => {
+        socket.leave(groupId);
+        console.log(`User ${userId} left group ${groupId}`);
+      });
+    }
+  });
+
   // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 

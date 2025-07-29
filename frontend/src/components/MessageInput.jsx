@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
-import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, X, Paperclip } from "lucide-react";
 import toast from "react-hot-toast";
+import FileUpload from "./FileUpload";
 
-const MessageInput = () => {
+const MessageInput = ({ onSendMessage }) => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -33,7 +33,7 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage({
+      await onSendMessage({
         text: text.trim(),
         image: imagePreview,
       });
@@ -45,6 +45,16 @@ const MessageInput = () => {
     } catch (error) {
       console.error("Failed to send message:", error);
     }
+  };
+
+  const handleFileSelect = (fileData) => {
+    if (fileData.type === 'image') {
+      setImagePreview(fileData.base64);
+    } else {
+      // For non-image files, you could implement different handling
+      toast.success(`File ${fileData.file.name} selected`);
+    }
+    setShowFileUpload(false);
   };
 
   return (
@@ -94,6 +104,13 @@ const MessageInput = () => {
           >
             <Image size={20} />
           </button>
+          <button
+            type="button"
+            className="hidden sm:flex btn btn-circle text-zinc-400"
+            onClick={() => setShowFileUpload(true)}
+          >
+            <Paperclip size={20} />
+          </button>
         </div>
         <button
           type="submit"
@@ -103,7 +120,15 @@ const MessageInput = () => {
           <Send size={22} />
         </button>
       </form>
+
+      {showFileUpload && (
+        <FileUpload
+          onFileSelect={handleFileSelect}
+          onClose={() => setShowFileUpload(false)}
+        />
+      )}
     </div>
   );
 };
+
 export default MessageInput;

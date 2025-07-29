@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { useEncryptionStore } from "./useEncryptionStore.jsx";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -33,6 +34,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/signup", data);
       set({ authUser: res.data });
+
+      // Initialize encryption for new user
+      await useEncryptionStore.getState().initializeEncryption(res.data);
+
       toast.success("Account created successfully");
       get().connectSocket();
     } catch (error) {
@@ -47,8 +52,11 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
-      toast.success("Logged in successfully");
 
+      // Initialize encryption for existing user
+      await useEncryptionStore.getState().initializeEncryption(res.data);
+
+      toast.success("Logged in successfully");
       get().connectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
@@ -61,6 +69,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axiosInstance.post("/auth/logout");
       set({ authUser: null });
+
+      // Clear encryption keys on logout
+      useEncryptionStore.getState().clearKeys();
+
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
@@ -97,6 +109,11 @@ export const useAuthStore = create((set, get) => ({
 
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
+    });
+
+    // Join user to their groups when socket connects
+    socket.on("connect", () => {
+      // This will be handled when groups are loaded
     });
   },
   disconnectSocket: () => {

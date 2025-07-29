@@ -25,25 +25,36 @@ export const signup = async (req, res) => {
       fullName,
       email,
       password: hashedPassword,
+      encryptionKey: "", // Will be set by frontend
     });
 
     if (newUser) {
-      // generate jwt token here
-      generateToken(newUser._id, res);
-      await newUser.save();
+      try {
+        // Save the user first, then generate token
+        await newUser.save();
+        console.log("User saved successfully:", newUser._id);
 
-      res.status(201).json({
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
-      });
+        // generate jwt token here
+        generateToken(newUser._id, res);
+        console.log("Token generated successfully");
+
+        res.status(201).json({
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          profilePic: newUser.profilePic,
+        });
+      } catch (saveError) {
+        console.log("Error saving user:", saveError);
+        throw saveError;
+      }
     } else {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
     console.log("Error in signup controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.log("Full error:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -113,6 +124,29 @@ export const checkAuth = (req, res) => {
     res.status(200).json(req.user);
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Update user's encryption key
+export const updateEncryptionKey = async (req, res) => {
+  try {
+    const { encryptionKey } = req.body;
+    const userId = req.user._id;
+
+    if (!encryptionKey) {
+      return res.status(400).json({ message: "Encryption key is required" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { encryptionKey },
+      { new: true }
+    ).select("-password");
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log("Error in updateEncryptionKey controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

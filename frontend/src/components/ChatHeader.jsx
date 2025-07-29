@@ -1,8 +1,8 @@
-import { X } from "lucide-react";
+import { X, Search } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
-import { useChatStore } from "../store/useChatStore";
+import { useChatStore } from "../store/useChatStore.jsx";
 
-const ChatHeader = () => {
+const ChatHeader = ({ onToggleSearch, showSearch }) => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers } = useAuthStore();
 
@@ -26,10 +26,20 @@ const ChatHeader = () => {
           </div>
         </div>
 
-        {/* Close button */}
-        <button onClick={() => setSelectedUser(null)}>
-          <X />
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onToggleSearch}
+            className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${showSearch ? "bg-blue-100 dark:bg-blue-900" : ""
+              }`}
+            title="Search messages"
+          >
+            <Search size={16} />
+          </button>
+          <button onClick={() => setSelectedUser(null)}>
+            <X />
+          </button>
+        </div>
       </div>
     </div>
   );
